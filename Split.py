@@ -288,7 +288,8 @@ class EmailPasswordSplitter(QMainWindow):
         
         if file_path:
             try:
-                with open(file_path, 'w') as f:
+                # Use UTF-8 encoding to handle all characters
+                with open(file_path, 'w', encoding='utf-8') as f:
                     f.write('\n'.join(formatted_lines))
                 self.statusBar().showMessage(f"Successfully saved to {file_path}", 5000)
                 QMessageBox.information(self, "Success", "File saved successfully!")
