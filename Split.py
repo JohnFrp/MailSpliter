@@ -239,15 +239,22 @@ class EmailPasswordSplitter(QMainWindow):
             QMessageBox.warning(self, "Warning", "You can't use both filter and remove domain at the same time!")
             return
         
-        # Split into lines and remove empty lines
-        lines = [line.strip() for line in input_data.split('\n') if line.strip()]
+        # First remove duplicates
+        unique_lines = []
+        seen = set()
+        for line in input_data.split('\n'):
+            if line.strip():  # Skip empty lines
+                if line not in seen:
+                    seen.add(line)
+                    unique_lines.append(line.strip())
         
         # Process each line
         formatted_lines = []
         skipped_count = 0
         removed_count = 0
+        duplicate_count = len(input_data.split('\n')) - len(unique_lines)
         
-        for line in lines:
+        for line in unique_lines:
             if ':' in line:
                 email, password = line.split(':', 1)
                 email = email.strip()
@@ -269,10 +276,17 @@ class EmailPasswordSplitter(QMainWindow):
                 formatted_lines.append(password)
                 formatted_lines.append("")  # Empty line between entries
         
+        # Show status messages
+        status_messages = []
+        if duplicate_count > 0:
+            status_messages.append(f"Removed {duplicate_count} duplicates")
         if domain_filter and skipped_count > 0:
-            self.statusBar().showMessage(f"Filtered out {skipped_count} non-{domain_filter} entries", 5000)
+            status_messages.append(f"Filtered out {skipped_count} non-{domain_filter} entries")
         elif domain_to_remove and removed_count > 0:
-            self.statusBar().showMessage(f"Removed {removed_count} {domain_to_remove} entries", 5000)
+            status_messages.append(f"Removed {removed_count} {domain_to_remove} entries")
+        
+        if status_messages:
+            self.statusBar().showMessage(" | ".join(status_messages), 5000)
         
         if not formatted_lines:
             QMessageBox.warning(self, "Warning", "No valid email:password pairs found after filtering!")
@@ -295,7 +309,7 @@ class EmailPasswordSplitter(QMainWindow):
                 QMessageBox.information(self, "Success", "File saved successfully!")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to save file:\n{str(e)}")
-    
+        
     def clear_input(self):
         self.input_text.clear()
         self.statusBar().showMessage("Cleared", 3000)
